@@ -1,0 +1,22 @@
+CREATE DATABASE jmoricet;
+
+USE jmoricet;
+
+CREATE EXTERNAL TABLE prenoms_csv(
+prenom STRING,
+gender ARRAY<CHAR>,
+origin ARRAY<STRING>,
+version DOUBLE)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\073'
+COLLECTION ITEMS TERMINATED BY ','
+STORED AS TEXTFILE location '/user/jmoricet/lab_hive';
+
+SELECT arr.value, count(arr.value) FROM prenoms_csv AS tmp
+LATERAL VIEW EXPLODE(tmp.origin) arr AS value GROUP BY arr.value;
+
+SELECT SIZE(origin), COUNT(prenom) FROM prenoms_csv GROUP BY size(origin);
+
+SELECT T1.male/T2.total*100 FROM (SELECT COUNT(gender) AS male FROM prenoms_csv 
+WHERE gender[0] LIKE 'm' OR gender[1] LIKE 'm') AS T1, 
+(SELECT COUNT(prenom) AS total FROM prenoms_csv) AS T2;
